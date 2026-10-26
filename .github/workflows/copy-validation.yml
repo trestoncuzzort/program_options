@@ -1,0 +1,46 @@
+name: Polymorphic option copy validation
+on:
+  push:
+    branches: [validation/polymorphic-copy]
+permissions:
+  contents: read
+jobs:
+  regression:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            compiler: gcc11
+          - os: ubuntu-24.04
+            compiler: clang-sanitized
+          - os: macos-14
+            compiler: clang
+          - os: windows-2022
+            compiler: msvc
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 9884080b11711628a03e20ccdf592f5160d6e079
+          path: fixed
+      - uses: actions/checkout@v4
+        with:
+          ref: e173046605e9ef04282135a4470f1eac38e5631f
+          path: original
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - name: Install GCC 11
+        if: matrix.compiler == 'gcc11'
+        run: sudo apt-get update && sudo apt-get install -y g++-11
+      - name: Validate diagnostic control and static/shared compatibility
+        env:
+          VALIDATION_COMPILER: ${{ matrix.compiler }}
+        run: python validation/copy.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: copy-${{ matrix.os }}-${{ matrix.compiler }}
+          path: validation-output/
+          if-no-files-found: error
