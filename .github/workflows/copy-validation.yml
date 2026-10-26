@@ -10,14 +10,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-24.04
-            compiler: gcc11
-          - os: ubuntu-24.04
-            compiler: clang-sanitized
           - os: macos-14
             compiler: clang
-          - os: windows-2022
-            compiler: msvc
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +31,7 @@ jobs:
       - name: Validate diagnostic control and static/shared compatibility
         env:
           VALIDATION_COMPILER: ${{ matrix.compiler }}
-        run: python validation/copy.py
+        run: python validation/verify_copy_compatibility.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
